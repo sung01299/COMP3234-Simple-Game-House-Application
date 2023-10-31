@@ -23,12 +23,54 @@ def main(argv):
     authmsg = sock.recv(1024).decode('utf-8')
     print(authmsg)
 
-    client_msg = input()
-    while client_msg != "/exit":
-        sock.send(client_msg.encode())
-        rcved_msg = sock.recv(1024).decode('utf-8')
-        print(rcved_msg)
-        client_msg = input()
+
+    while True:
+        client_msg = input("")
+        client_msg_key = client_msg.split()[0]
+        # exit
+        if client_msg_key == "/exit":
+            sock.send(client_msg.encode())
+            rcved_msg = sock.recv(1024).decode('utf-8')
+            print(rcved_msg)
+            break
+
+        # list
+        elif client_msg_key == "/list":
+            sock.send(client_msg.encode())
+            rcved_msg = sock.recv(1024).decode('utf-8')
+            print(rcved_msg)
+        
+        # enter
+        elif client_msg_key == "/enter":
+            sock.send(client_msg.encode())
+            rcved_msg = sock.recv(1024).decode('utf-8')
+            
+            print(rcved_msg)
+
+            rcved_msg_key = rcved_msg.split()[0]
+            # Wait
+            if rcved_msg_key == "3011":
+                rcved_msg = sock.recv(1024).decode('utf-8')
+                print(rcved_msg)
+            # Game started
+            elif rcved_msg_key == "3012":
+                guess_msg = input("")
+                sock.send(guess_msg.encode())
+                rcved_result_msg = sock.recv(1024).decode('utf-8')
+                print(rcved_result_msg)
+            # Room Full
+            else:
+                continue
+
+
+        # Unrecognized message    
+        else:
+            sock.send(client_msg.encode())
+            rcved_msg = sock.recv(1024).decode('utf-8')
+            print(rcved_msg)
+
+        print("SENT:", client_msg)
+        
 
 
     
