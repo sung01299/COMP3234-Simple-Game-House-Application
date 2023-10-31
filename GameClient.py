@@ -18,10 +18,17 @@ def main(argv):
     except:
         print("Username/PW ERROR!!")
 
-    userinfo = [username, password]
-    sock.send(str(userinfo).encode())
+    auth_msg = f"/login {username} {password}"
+    sock.send(auth_msg.encode())
     authmsg = sock.recv(1024).decode('utf-8')
     print(authmsg)
+
+    client_msg = input()
+    while client_msg != "/exit":
+        sock.send(client_msg.encode())
+        rcved_msg = sock.recv(1024).decode('utf-8')
+        print(rcved_msg)
+        client_msg = input()
 
 
     
