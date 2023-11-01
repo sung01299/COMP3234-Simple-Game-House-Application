@@ -3,6 +3,7 @@ import socket
 import sys
 import time
 
+
 def main(argv):
     # Store user info
     userdict = {}
@@ -10,7 +11,6 @@ def main(argv):
         for line in txt:
             key, val = line.split(":")
             userdict[key] = val.strip()
-
 
     serverPort = int(argv[1])
     try:
@@ -48,18 +48,18 @@ def main(argv):
                     msg = "1001 Authentication successful"
                     connectionSocket.send(msg.encode())
                     connected_sockets.append(connectionSocket)
-            
+
             # In the Game Hall
             elif rcved_msg[0] == "/list":
                 str_list = [str(num) for num in game_rooms]
                 msg = f"3001 {num_of_game_rooms} {' '.join(str_list)}"
                 connectionSocket.send(msg.encode())
-            
+
             # enter
             elif rcved_msg[0] == "/enter":
                 if game_rooms[int(rcved_msg[1]) - 1] == 0:
                     game_rooms[int(rcved_msg[1]) - 1] += 1
-                    msg = "3001 Wait"
+                    msg = "3011 Wait"
                     connectionSocket.send(msg.encode())
                 elif game_rooms[int(rcved_msg[1]) - 1] == 1:
                     game_rooms[int(rcved_msg[1]) - 1] += 1
@@ -68,7 +68,6 @@ def main(argv):
                 else:
                     msg = "3013 The room is full"
                     connectionSocket.send(msg.encode())
-
 
             # exit
             elif rcved_msg[0] == "/exit":
@@ -80,14 +79,11 @@ def main(argv):
                 msg = "4002 Unrecognized message"
                 connectionSocket.send(msg.encode())
 
-            
-
-            
             print("Connected Sockets #:", len(connected_sockets))
-        
 
     serverSocket.close()
     return
+
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
