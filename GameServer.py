@@ -8,7 +8,8 @@ import threading
 print_lock = threading.Lock()
 connected_sockets = []
 num_of_game_rooms = 10
-game_rooms = [0 for _ in range(num_of_game_rooms)]
+game_rooms = [[] for _ in range(num_of_game_rooms)]
+
 
 def threaded(connectionSocket):
     userdict = {}
@@ -36,20 +37,21 @@ def threaded(connectionSocket):
 
         # In the Game Hall
         elif rcved_msg[0] == "/list":
-            str_list = [str(num) for num in game_rooms]
+            str_list = [len(num) for num in game_rooms]
             msg = f"3001 {num_of_game_rooms} {' '.join(str_list)}"
             connectionSocket.send(msg.encode())
 
         # enter
         elif rcved_msg[0] == "/enter":
-            if game_rooms[int(rcved_msg[1]) - 1] == 0:
-                game_rooms[int(rcved_msg[1]) - 1] += 1
+            if len(game_rooms[int(rcved_msg[1]) - 1]) == 0:
+                game_rooms[int(rcved_msg[1]) - 1].append(connectionSocket)
                 msg = "3011 Wait"
                 connectionSocket.send(msg.encode())
-            elif game_rooms[int(rcved_msg[1]) - 1] == 1:
-                game_rooms[int(rcved_msg[1]) - 1] += 1
+            elif len(game_rooms[int(rcved_msg[1]) - 1]) == 1:
+                game_rooms[int(rcved_msg[1]) - 1].append(connectionSocket)
                 msg = "3012 Game started. Please guess true or false"
-                connectionSocket.send(msg.encode())
+                for s in game_rooms[int(rcved_msg[1]) - 1]:
+                    s.send(msg.encode())
             else:
                 msg = "3013 The room is full"
                 connectionSocket.send(msg.encode())
@@ -65,6 +67,7 @@ def threaded(connectionSocket):
             connectionSocket.send(msg.encode())
 
         print("Connected Sockets #:", len(connected_sockets))
+
 
 def main(argv):
     # Store user info
@@ -92,7 +95,6 @@ def main(argv):
             connectionSocket, addr = serverSocket.accept()
         except socket.error as emsg:
             print("socket error:", emsg)
-        print_lock.acquire()
         start_new_thread(threaded, (connectionSocket,))
         print("addr:", addr)
         # while True:
