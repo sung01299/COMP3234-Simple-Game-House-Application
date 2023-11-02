@@ -2,7 +2,6 @@ import os
 import socket
 import sys
 
-
 def main(argv):
     try:
         sock = socket.socket()
@@ -21,7 +20,7 @@ def main(argv):
 
     auth_msg = f"/login {username} {password}"
     sock.send(auth_msg.encode())
-    authmsg = sock.recv(1024).decode('utf-8')
+    authmsg = sock.recv(1024).decode()
     print(authmsg)
 
     while True:
@@ -30,34 +29,34 @@ def main(argv):
         # exit
         if client_msg_key == "/exit":
             sock.send(client_msg.encode())
-            rcved_msg = sock.recv(1024).decode('utf-8')
+            rcved_msg = sock.recv(1024).decode()
             print(rcved_msg)
             break
 
         # list
         elif client_msg_key == "/list":
             sock.send(client_msg.encode())
-            rcved_msg = sock.recv(1024).decode('utf-8')
+            rcved_msg = sock.recv(1024).decode()
             print(rcved_msg)
 
         # enter
         elif client_msg_key == "/enter":
             sock.send(client_msg.encode())
-            rcved_msg = sock.recv(1024).decode('utf-8')
+            rcved_msg = sock.recv(1024).decode()
 
             print(rcved_msg)
 
             rcved_msg_key = rcved_msg.split()[0]
             # Wait
             if rcved_msg_key == "3011":
-                rcved_msg = sock.recv(1024).decode('utf-8')
+                rcved_msg = sock.recv(1024).decode()
                 print(rcved_msg)
                 if rcved_msg.split()[0] == "3012":
                     guess_input = input("")
                     guess_msg = f"{guess_input} {client_msg.split()[1]}"
                     print(guess_msg)
                     sock.send(guess_msg.encode())
-                    rcved_result_msg = sock.recv(1024).decode('utf-8')
+                    rcved_result_msg = sock.recv(1024).decode()
                     print(rcved_result_msg)
             # Game started
             elif rcved_msg_key == "3012":
@@ -65,7 +64,7 @@ def main(argv):
                 guess_msg = f"{guess_input} {client_msg.split()[1]}"
                 print(guess_msg)
                 sock.send(guess_msg.encode())
-                rcved_result_msg = sock.recv(1024).decode('utf-8')
+                rcved_result_msg = sock.recv(1024).decode()
                 print(rcved_result_msg)
             # Room Full
             else:
@@ -74,7 +73,7 @@ def main(argv):
         # Unrecognized message
         else:
             sock.send(client_msg.encode())
-            rcved_msg = sock.recv(1024).decode('utf-8')
+            rcved_msg = sock.recv(1024).decode()
             print(rcved_msg)
 
         print("SENT:", client_msg)
