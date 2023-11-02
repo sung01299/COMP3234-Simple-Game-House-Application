@@ -9,6 +9,7 @@ print_lock = threading.Lock()
 connected_sockets = []
 num_of_game_rooms = 10
 game_rooms = [[] for _ in range(num_of_game_rooms)]
+inputs_by_rooms = [{} for _ in range(num_of_game_rooms)]
 
 
 def threaded(connectionSocket):
@@ -37,7 +38,7 @@ def threaded(connectionSocket):
 
         # In the Game Hall
         elif rcved_msg[0] == "/list":
-            str_list = [len(num) for num in game_rooms]
+            str_list = [str(len(num)) for num in game_rooms]
             msg = f"3001 {num_of_game_rooms} {' '.join(str_list)}"
             connectionSocket.send(msg.encode())
 
@@ -55,6 +56,12 @@ def threaded(connectionSocket):
             else:
                 msg = "3013 The room is full"
                 connectionSocket.send(msg.encode())
+
+        # guess
+        elif rcved_msg[0] == "/guess":
+            server_choice = "true"
+            inputs_by_rooms[rcved_msg[2]-1][connectionSocket] = rcved_msg[1]
+            print(inputs_by_rooms)
 
         # exit
         elif rcved_msg[0] == "/exit":
