@@ -4,67 +4,72 @@ import sys
 
 def main(argv):
     try:
-        sock = socket.socket()
-        sock.connect((argv[1], int(argv[2])))
+        client_socket = socket.socket()
+        client_socket.connect((argv[1], int(argv[2])))
     except socket.error as emsg:
         print("Socket error:", emsg)
         sys.exit(1)
-    print("Connection established. My socket address is", sock.getsockname())
+    print("Connection established. My socket address is", client_socket.getsockname())
 
     # authentication
-    try:
-        username = input("Please input your user name:\n")
-        password = input("Please input your password:\n")
-    except:
-        print("Username/PW ERROR!!")
+    auth = False
+    while auth == False:
+        try:
+            username = input("Please input your user name:\n")
+            password = input("Please input your password:\n")
+        except:
+            print("Username/PW ERROR!!")
 
-    auth_msg = f"/login {username} {password}"
-    sock.send(auth_msg.encode())
-    authmsg = sock.recv(1024).decode()
-    print(authmsg)
+        auth_msg = f"/login {username} {password}"
+        client_socket.send(auth_msg.encode())
+        rcved_authmsg = client_socket.recv(1024).decode()
+        print(rcved_authmsg)
+        auth_msg_key = rcved_authmsg.split()[0]
+        if auth_msg_key == "1001":
+            auth = True
 
     while True:
         client_msg = input("")
         client_msg_key = client_msg.split()[0]
         # exit
         if client_msg_key == "/exit":
-            sock.send(client_msg.encode())
-            rcved_msg = sock.recv(1024).decode()
+            client_socket.send(client_msg.encode())
+            rcved_msg = client_socket.recv(1024).decode()
             print(rcved_msg)
             break
 
         # list
         elif client_msg_key == "/list":
-            sock.send(client_msg.encode())
-            rcved_msg = sock.recv(1024).decode()
+            client_socket.send(client_msg.encode())
+            rcved_msg = client_socket.recv(1024).decode()
             print(rcved_msg)
 
         # enter
         elif client_msg_key == "/enter":
-            sock.send(client_msg.encode())
-            rcved_msg = sock.recv(1024).decode()
+            client_socket.send(client_msg.encode())
+            rcved_msg = client_socket.recv(1024).decode()
 
             print(rcved_msg)
 
             rcved_msg_key = rcved_msg.split()[0]
             # Wait
             if rcved_msg_key == "3011":
-                rcved_msg = sock.recv(1024).decode()
+                rcved_msg = client_socket.recv(1024).decode()
                 print(rcved_msg)
                 if rcved_msg.split()[0] == "3012":
                     guess_input = input("")
                     guess_msg = f"{guess_input} {client_msg.split()[1]}"
                     print(guess_msg)
-                    sock.send(guess_msg.encode())
-                    rcved_result_msg = sock.recv(1024).decode()
+                    client_socket.send(guess_msg.encode())
+                    rcved_result_msg = client_socket.recv(1024).decode()
                     print(rcved_result_msg)
             # Game started
             elif rcved_msg_key == "3012":
                 guess_input = input("")
                 guess_msg = f"{guess_input} {client_msg.split()[1]}"
                 print(guess_msg)
-                sock.send(guess_msg.encode())
-                rcved_result_msg = sock.recv(1024).decode()
+                client_socket.send(guess_msg.encode())
+                rcved_result_msg = client_socket.recv(1024).decode()
                 print(rcved_result_msg)
             # Room Full
             else:
@@ -72,8 +77,8 @@ def main(argv):
 
         # Unrecognized message
         else:
-            sock.send(client_msg.encode())
-            rcved_msg = sock.recv(1024).decode()
+            client_socket.send(client_msg.encode())
+            rcved_msg = client_socket.recv(1024).decode()
             print(rcved_msg)
 
         print("SENT:", client_msg)
