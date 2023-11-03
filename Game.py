@@ -7,20 +7,20 @@ from _thread import *
 import threading
 
 class GameServer:
-    def __init__(self, num_of_game_rooms):
+    def __init__(self, num_of_rooms):
         self.thrd_lock = threading.Lock()
         self.connected_sockets = []
         self.connected_users = []
-        self.num_of_game_rooms = num_of_game_rooms
-        self.game_rooms = [[] for _ in range(num_of_game_rooms)]
-        self.inputs_by_rooms = [{} for _ in range(num_of_game_rooms)]
-        self.userdict = {}
+        self.num_of_rooms = num_of_rooms
+        self.room_list = [[] for _ in range(num_of_rooms)]
+        self.guess_by_room = [{} for _ in range(num_of_rooms)]
+        self.user_info = {}
 
     def getUserInfo(self):
         with open("userinfo.txt") as txt:
             for line in txt:
-                key, val = line.split(":")
-                self.userdict[key] = val.strip()
+                username, pw = line.split(":")
+                self.user_info[username] = pw.strip()
 
     def threaded(self, client_socket):
         while True:
@@ -30,7 +30,7 @@ class GameServer:
             if rcved_msg[0] == "/login":
                 username = rcved_msg[1]
                 password = rcved_msg[2]
-                if username not in self.userdict or self.userdict[username] != password:
+                if username not in self.user_info or username in self.connected_users or self.user_info[username] != password:
                     msg = "1002 Authentication failed"
                     client_socket.send(msg.encode())
                 else:
@@ -42,22 +42,22 @@ class GameServer:
             # In the Game Hall
             elif rcved_msg[0] == "/list":
                 self.thrd_lock.acquire()
-                str_list = [str(len(num)) for num in self.game_rooms]
-                msg = f"3001 {self.num_of_game_rooms} {' '.join(str_list)}"
+                str_list = [str(len(num)) for num in self.room_list]
+                msg = f"3001 {self.num_of_rooms} {' '.join(str_list)}"
                 client_socket.send(msg.encode())
                 self.thrd_lock.release()
 
             # enter
             elif rcved_msg[0] == "/enter":
                 self.thrd_lock.acquire()
-                if len(self.game_rooms[int(rcved_msg[1]) - 1]) == 0:
-                    self.game_rooms[int(rcved_msg[1]) - 1].append(client_socket)
+                if len(self.room_list[int(rcved_msg[1]) - 1]) == 0:
+                    self.room_list[int(rcved_msg[1]) - 1].append(client_socket)
                     msg = "3011 Wait"
                     client_socket.send(msg.encode())
-                elif len(self.game_rooms[int(rcved_msg[1]) - 1]) == 1:
-                    self.game_rooms[int(rcved_msg[1]) - 1].append(client_socket)
+                elif len(self.room_list[int(rcved_msg[1]) - 1]) == 1:
+                    self.room_list[int(rcved_msg[1]) - 1].append(client_socket)
                     msg = "3012 Game started. Please guess true or false"
-                    for s in self.game_rooms[int(rcved_msg[1]) - 1]:
+                    for s in self.room_list[int(rcved_msg[1]) - 1]:
                         s.send(msg.encode())
                 else:
                     msg = "3013 The room is full"
@@ -70,30 +70,30 @@ class GameServer:
                 server_choice = random.choice(choices_list)
 
                 self.thrd_lock.acquire()
-                if len(self.inputs_by_rooms[int(rcved_msg[2]) - 1]) < 2: 
-                    self.inputs_by_rooms[int(rcved_msg[2])-1][client_socket] = rcved_msg[1]
+                if len(self.guess_by_room[int(rcved_msg[2]) - 1]) < 2: 
+                    self.guess_by_room[int(rcved_msg[2])-1][client_socket] = rcved_msg[1]
                 self.thrd_lock.release()
                 self.thrd_lock.acquire()
-                if len(self.inputs_by_rooms[int(rcved_msg[2]) - 1]) == 2:
+                if len(self.guess_by_room[int(rcved_msg[2]) - 1]) == 2:
                     # Game Tied
-                    if len(set(self.inputs_by_rooms[int(rcved_msg[2]) - 1].values())) == 1:
+                    if len(set(self.guess_by_room[int(rcved_msg[2]) - 1].values())) == 1:
                         msg = "3023 The result is tie"
-                        for s in self.inputs_by_rooms[int(rcved_msg[2]) - 1].keys():
+                        for s in self.guess_by_room[int(rcved_msg[2]) - 1].keys():
                             s.send(msg.encode())
                     # Game finished
                     else:
                         win_msg = "3021 You are the winner"
                         loss_msg = "3022 You lost this game"
-                        for s, val in self.inputs_by_rooms[int(rcved_msg[2])-1].items():
+                        for s, val in self.guess_by_room[int(rcved_msg[2])-1].items():
                             if val == server_choice:
                                 s.send(win_msg.encode())
                             else:
                                 s.send(loss_msg.encode())
-                    self.game_rooms[int(rcved_msg[2]) - 1] = []
-                    self.inputs_by_rooms[int(rcved_msg[2]) - 1] = {}
+                    self.room_list[int(rcved_msg[2]) - 1] = []
+                    self.guess_by_room[int(rcved_msg[2]) - 1] = {}
                 self.thrd_lock.release()
 
-                print(self.inputs_by_rooms)
+                print(self.guess_by_room)
 
             # exit
             elif rcved_msg[0] == "/exit":
@@ -124,9 +124,8 @@ class GameServer:
                 client_socket, addr = server_socket.accept()
             except socket.error as emsg:
                 print("socket error:", emsg)
+            start_new_thread(self.threaded, (client_socket,))
             print("addr:", addr)
-        # server_socket.close()
-        # return
 
 
 if __name__ == '__main__':
@@ -134,6 +133,6 @@ if __name__ == '__main__':
         print("Usage: python3 GameServer.py <Server_port>")
         sys.exit(1)
     server_port = int(sys.argv[1])
-    game_server = GameServer(num_of_game_rooms=10)
+    game_server = GameServer(num_of_rooms=10)
     game_server.getUserInfo()
     game_server.main(server_port)
