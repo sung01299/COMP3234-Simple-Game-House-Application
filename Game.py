@@ -7,17 +7,18 @@ from _thread import *
 import threading
 
 class GameServer:
-    def __init__(self, num_of_rooms):
+    def __init__(self, num_of_rooms, file_path):
         self.thrd_lock = threading.Lock()
         self.connected_sockets = []
         self.connected_users = []
         self.num_of_rooms = num_of_rooms
+        self.file_path = file_path
         self.room_list = [[] for _ in range(num_of_rooms)]
         self.guess_by_room = [{} for _ in range(num_of_rooms)]
         self.user_info = {}
 
     def getUserInfo(self):
-        with open("userinfo.txt") as txt:
+        with open(self.file_path) as txt:
             for line in txt:
                 username, pw = line.split(":")
                 self.user_info[username] = pw.strip()
@@ -129,10 +130,12 @@ class GameServer:
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print("Usage: python3 GameServer.py <Server_port>")
+    if len(sys.argv) != 3:
+        print("Usage: python3 GameServer.py <Server_port> <UserInfo_path>")
         sys.exit(1)
+    
     server_port = int(sys.argv[1])
-    game_server = GameServer(num_of_rooms=10)
+    file_path = sys.argv[2]
+    game_server = GameServer(num_of_rooms=10, file_path=file_path)
     game_server.getUserInfo()
     game_server.main(server_port)
