@@ -51,13 +51,13 @@ class GameClient:
             guess_input = input("")
             # Update guess_key, client_guess, guess_input_length
             guess_key = guess_input.split()[0]
-            client_guess = guess_input.split()[1]
             guess_input_length = len(guess_input.split())
+            if guess_input_length >= 2:
+                client_guess = guess_input.split()[1]
             if guess_key != "/guess" or guess_input_length != 2 or client_guess not in choices:
                 print("4002 Unrecognized message")
         # Communicates with server
         guess_msg = f"{guess_input} {client_msg.split()[1]}"
-        print(guess_msg)
         self.client_socket.send(guess_msg.encode())
         rcved_result_msg = self.client_socket.recv(1024).decode()
         print(rcved_result_msg)
