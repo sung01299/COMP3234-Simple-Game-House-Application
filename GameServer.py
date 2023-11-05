@@ -174,6 +174,7 @@ class GameServer:
             
             # Reset the connected_sockets
             self.connected_sockets.pop(client_socket, None)
+        client_socket.close()
 
     def main(self, server_port):
         # Start the server
