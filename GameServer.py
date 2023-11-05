@@ -149,6 +149,11 @@ class GameServer:
                     client_socket.close()
         except ConnectionResetError:
             print("Client connection was reset.")
+            for index, room in enumerate(self.room_list):
+                if client_socket in room:
+                    room_num = index
+                    break
+            self.room_list[room_num].remove(client_socket)
         except ConnectionAbortedError:
             print("Client connection was aborted.")
         except socket.error as emsg:
